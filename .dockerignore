@@ -1,0 +1,9 @@
+.git
+.terraform
+**/.terraform
+**/.terragrunt-cache
+target
+build
+*.tfstate
+*.tfplan
+.DS_Store

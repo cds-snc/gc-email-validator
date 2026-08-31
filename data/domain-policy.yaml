@@ -1,0 +1,22 @@
+# Namespace membership and domain recognition are intentionally separate.
+# Unknown children of these roots are reported as namespace-controlled, but
+# only aliases compiled from active organizations are recognized email domains.
+namespace_roots:
+  - canada.ca
+  - gc.ca
+
+# Recognize only the roots themselves (not every child) as email domains.
+recognize_namespace_roots: true
+
+# Exact exclusions take precedence over all upstream sources.
+excluded_domains: []
+
+# Domains outside the GC-controlled namespaces require an explicit review here
+# AND a matching alias for the same active gc_orgID in gc_org_aliases.csv.
+external_domains: []
+# Example:
+# external_domains:
+#   - domain: example-crown-corporation.ca
+#     gc_org_id: 1234
+#     include_subdomains: true
+

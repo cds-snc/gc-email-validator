@@ -1,0 +1,84 @@
+name: Refresh domain data
+
+on:
+  schedule:
+    - cron: "17 10 * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: domain-data-refresh
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  UPDATE_BRANCH: automation/domain-data-refresh
+
+jobs:
+  refresh:
+    name: Refresh and propose changes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@6c977a6ca4077a0ceb28ffbe03f59d46e9ac8772
+        with:
+          toolchain: 1.98.0
+          components: clippy, rustfmt
+
+      - name: Download, verify, and compile upstream data
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: ./scripts/refresh-data.sh
+
+      - name: Test refreshed data
+        run: cargo test --locked --workspace --all-targets
+
+      - name: Detect changes
+        id: changes
+        run: |
+          if git diff --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit update branch
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$UPDATE_BRANCH"
+          git add data/upstream data/manifest.json crates/api/src/generated_domains.rs Cargo.lock
+          git commit -m "chore(data): refresh Government of Canada domains"
+          git push --force-with-lease origin "HEAD:$UPDATE_BRANCH"
+
+      - name: Run CI on update branch
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run ci.yml --ref "$UPDATE_BRANCH"
+
+      - name: Create pull request
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh pr view "$UPDATE_BRANCH" >/dev/null 2>&1; then
+            gh pr edit "$UPDATE_BRANCH" --title "chore(data): refresh Government of Canada domains"
+          else
+            gh pr create \
+              --base main \
+              --head "$UPDATE_BRANCH" \
+              --title "chore(data): refresh Government of Canada domains" \
+              --body "Automated refresh of the three data files from one pinned gcorg-resolver commit. Review the generated manifest and domain diff before merging."
+          fi

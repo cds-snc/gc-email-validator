@@ -1,0 +1,25 @@
+{
+  "name": "GC email validator",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "..",
+    "args": {
+      "CARGO_LAMBDA_VERSION": "1.9.2",
+      "TERRAGRUNT_VERSION": "1.1.4",
+      "TERRAFORM_VERSION": "1.15.8",
+      "ZIG_VERSION": "0.15.2"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "amazonwebservices.aws-toolkit-vscode",
+        "hashicorp.terraform",
+        "rust-lang.rust-analyzer",
+        "tamasfe.even-better-toml"
+      ]
+    }
+  },
+  "remoteUser": "vscode",
+  "postCreateCommand": "cargo fetch --locked && terraform -chdir=aws/lambda init -backend=false && TG_AWS_ACCOUNT_ID=000000000000 terragrunt hcl validate --working-dir terragrunt"
+}

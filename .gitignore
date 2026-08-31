@@ -1,0 +1,17 @@
+/target/
+**/.terraform/
+**/.terragrunt-cache/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+!*.tfvars.example
+override.tf
+*_override.tf
+crash.log
+.DS_Store
+.env
+.idea/
+.vscode/*
+!.vscode/extensions.json
+/build/
