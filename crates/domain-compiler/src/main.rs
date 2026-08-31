@@ -130,7 +130,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     verify_source_hash(&aliases_bytes, &metadata.aliases_sha256, ALIASES_FILE)?;
 
     let concordance_ids = load_concordance_ids(&concordance_path)?;
-    let organizations = load_active_organizations(&org_info_path)?;
+    let organizations = load_non_terminated_organizations(&org_info_path)?;
     let mut roots = normalize_policy_domains(&policy.namespace_roots)?;
     roots.sort();
     roots.dedup();
@@ -246,7 +246,7 @@ fn load_concordance_ids(path: &Path) -> Result<BTreeSet<u32>, Box<dyn std::error
     Ok(ids)
 }
 
-fn load_active_organizations(
+fn load_non_terminated_organizations(
     path: &Path,
 ) -> Result<HashMap<u32, (String, String)>, Box<dyn std::error::Error>> {
     let mut reader = csv::Reader::from_path(path)?;
@@ -255,23 +255,45 @@ fn load_active_organizations(
     let status_index = column(&headers, "status_statut", path)?;
     let en_index = column(&headers, "preferred_name", path)?;
     let fr_index = column(&headers, "nom_préféré", path)?;
+    let harmonized_en_index = column(&headers, "harmonized_name", path)?;
+    let harmonized_fr_index = column(&headers, "nom_harmonisé", path)?;
     let mut organizations = HashMap::new();
 
     for row in reader.records() {
         let row = row?;
-        if row.get(status_index).unwrap_or_default().trim() != "a" {
+        if is_terminated_status(row.get(status_index)) {
             continue;
         }
         let id = parse_u32(&row, id_index, "gc_orgID", path)?;
         organizations.insert(
             id,
             (
-                row.get(en_index).unwrap_or_default().trim().to_owned(),
-                row.get(fr_index).unwrap_or_default().trim().to_owned(),
+                preferred_or_harmonized_name(&row, en_index, harmonized_en_index),
+                preferred_or_harmonized_name(&row, fr_index, harmonized_fr_index),
             ),
         );
     }
     Ok(organizations)
+}
+
+fn is_terminated_status(status: Option<&str>) -> bool {
+    status.is_some_and(|value| value.trim().eq_ignore_ascii_case("t"))
+}
+
+fn preferred_or_harmonized_name(
+    row: &StringRecord,
+    preferred_index: usize,
+    harmonized_index: usize,
+) -> String {
+    let preferred = row.get(preferred_index).unwrap_or_default().trim();
+    if preferred.is_empty() {
+        row.get(harmonized_index)
+            .unwrap_or_default()
+            .trim()
+            .to_owned()
+    } else {
+        preferred.to_owned()
+    }
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -568,5 +590,14 @@ mod tests {
         assert!(is_domain_or_child("mail.statcan.gc.ca", "gc.ca"));
         assert!(!is_domain_or_child("evilgc.ca", "gc.ca"));
         assert!(!is_domain_or_child("gc.ca.example", "gc.ca"));
+    }
+
+    #[test]
+    fn excludes_only_explicitly_terminated_organizations() {
+        assert!(is_terminated_status(Some("t")));
+        assert!(is_terminated_status(Some(" T ")));
+        assert!(!is_terminated_status(Some("a")));
+        assert!(!is_terminated_status(Some("")));
+        assert!(!is_terminated_status(None));
     }
 }
