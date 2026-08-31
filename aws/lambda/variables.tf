@@ -1,7 +1,7 @@
 variable "account_id" {
   description = "AWS account ID allowed by the generated Terragrunt provider."
   type        = string
-  default     = "000000000000"
+  default     = "283582579564"
 
   validation {
     condition     = can(regex("^[0-9]{12}$", var.account_id))
