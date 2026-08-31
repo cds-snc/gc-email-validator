@@ -1,10 +1,12 @@
 name: Terraform apply
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
     paths:
       - "aws/**"
+      - "terragrunt/**"
       - ".github/workflows/tf_apply.yml"
       - "crates/**"
       - "data/**"
@@ -23,7 +25,7 @@ permissions:
 
 jobs:
   terragrunt-apply:
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main'
     strategy:
       fail-fast: false
       matrix:
@@ -84,5 +86,6 @@ jobs:
       - name: Apply Terragrunt unit
         env:
           TG_LAMBDA_ZIP_PATH: ${{ github.workspace }}/build/lambda.zip
+          TG_ENABLE_CUSTOM_DOMAIN: ${{ vars.ENABLE_CUSTOM_DOMAIN || 'false' }}
         working-directory: terragrunt/lambda
         run: terragrunt run apply --backend-require-bootstrap --non-interactive -- -auto-approve -input=false
