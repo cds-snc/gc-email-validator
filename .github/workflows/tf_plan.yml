@@ -7,6 +7,11 @@ on:
 
 env:
   AWS_REGION: ca-central-1
+  CARGO_LAMBDA_VERSION: 1.9.2
+  CARGO_LAMBDA_SHA256: b5c258c424ebaef39541c3641f33c51137ee6c426016f365628fedb2c737271d
+  CARGO_TERM_COLOR: always
+  ZIG_VERSION: 0.15.2
+  ZIG_SHA256: 02aa270f183da276e5b5920b1dac44a63f1a49e55050ebde3aecc9eb82f93239
 
 permissions:
   id-token: write
