@@ -13,5 +13,6 @@ inputs = {
     "TG_LAMBDA_ZIP_PATH",
     abspath("${get_terragrunt_dir()}/../../build/lambda.zip")
   )
-}
 
+  api_domain_name = get_env("TG_API_DOMAIN_NAME", "validate-email.cdssandbox.xyz")
+}

@@ -56,11 +56,12 @@ The generated list uses three inputs:
 2. [`gcorg-resolver`](https://github.com/cds-snc/gcorg-resolver) maintains snapshots of those two official files and supplies the curated domain-like aliases. The refresh process downloads all three CSVs from one immutable repository commit, ensuring they form an internally consistent snapshot.
 3. [`data/domain-policy.yaml`](data/domain-policy.yaml) defines controlled namespace roots, exact exclusions, and explicitly reviewed domains outside those roots.
 
-The compiler accepts an alias only when its organization is active and appears
-in the concordance. Domains under `gc.ca` and `canada.ca` are eligible by
-default. Any external domain must appear both in the upstream alias data and in
-the local policy for the same organization ID. This avoids treating every
-organization website as an email domain.
+The compiler accepts an alias only when its organization appears in the
+concordance and is not explicitly marked terminated (`t`) in the organization
+metadata. Blank or unspecified statuses remain eligible. Domains under `gc.ca`
+and `canada.ca` are eligible by default. Any external domain must appear both
+in the upstream alias data and in the local policy for the same organization
+ID. This avoids treating every organization website as an email domain.
 
 Source snapshots and their SHA-256 hashes are checked in under `data/upstream`.
 [`data/manifest.json`](data/manifest.json) records the resulting version and
@@ -158,20 +159,40 @@ terragrunt backend bootstrap
 
 The GitHub OIDC provider and deployment role are created by an external
 process. That role must be allowed to read and write objects in the selected
-state bucket and deploy the service resources. Put its ARN, the account ID,
-state bucket name, and region into the protected GitHub environment described
-above. CI and the deployment workflow never create identity infrastructure or
-run backend bootstrap.
+state bucket and deploy the service resources. In addition to the existing
+Lambda, IAM-role, CloudWatch Logs, and Lambda permission-policy actions, it
+needs permission to manage API Gateway v2 APIs, integrations, routes, stages,
+custom domains, and API mappings, plus the ACM certificate lifecycle. Put its
+ARN, the account ID, state bucket name, and region into the protected GitHub
+environment described above. CI and the deployment workflow never create
+identity infrastructure or run backend bootstrap.
 
 The reusable application module in [`aws/lambda`](aws/lambda) creates one ARM64
-Lambda, one HTTP API, two bounded-retention log groups, and least-privilege
-runtime IAM. [`terragrunt/root.hcl`](terragrunt/root.hcl) generates the
-account-specific AWS provider and S3 backend, while
+Lambda ZIP deployment, a Regional API Gateway HTTP API, an ACM certificate in
+`ca-central-1`, one bounded-retention log group, and least-privilege runtime
+IAM. [`terragrunt/root.hcl`](terragrunt/root.hcl) generates the account-specific
+AWS provider and S3 backend, while
 [`terragrunt/lambda/terragrunt.hcl`](terragrunt/lambda/terragrunt.hcl) connects
 the module to the locally built Lambda ZIP. Its default 128 MB memory, no
-database, no NAT gateway, and on-demand HTTP API make the design inexpensive at
-low traffic and horizontally scalable at Lambda/API Gateway limits. Stage
-throttling protects the account from accidental cost spikes.
+database, and no NAT gateway keep the design inexpensive at low traffic and
+horizontally scalable at Lambda limits.
+
+### Custom-domain activation
+
+The validated ACM certificate is attached to the Regional API Gateway custom
+domain on the next apply. Afterward, read the DNS target:
+
+```shell
+cd terragrunt/lambda
+terragrunt output custom_domain_dns_target
+```
+
+Create the reported CNAME for `validate-email.cdssandbox.xyz` at the DNS
+provider. The default `execute-api` endpoint is disabled, so requests use only
+the custom hostname.
+
+The certificate and API Gateway endpoint are both Regional resources in
+`ca-central-1`; no `us-east-1` provider or CloudFront distribution is required.
 
 After the bootstrap exists, an authenticated local plan can be run with:
 
@@ -185,15 +206,16 @@ terragrunt run plan
 
 ## Privacy and logging
 
-The API Gateway access-log format contains route, status, size, and latency but
-not request bodies, query strings, headers, or email addresses. The Rust handler
-does not log request payloads. Keep that property when adding observability.
+API Gateway access logging is not enabled, and the Rust handler does not log
+request payloads or email addresses. Keep that property when adding
+observability.
 
 ## Limitations
 
 - Upstream aliases are curated evidence, not a formal inventory of every email
   domain used by every federal organization.
-- The active flag is organization-level; an old alias can remain upstream.
+- The status is organization-level; an old alias can remain upstream even when
+  its organization is not explicitly marked terminated.
   Suspicious or retired domains should be placed in `excluded_domains` while an
   upstream correction is pursued.
 - Crown corporations and other entities using domains outside `gc.ca` and

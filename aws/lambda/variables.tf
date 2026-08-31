@@ -1,7 +1,7 @@
 variable "account_id" {
   description = "AWS account ID allowed by the generated Terragrunt provider."
   type        = string
-  default     = "000000000000"
+  default     = "283582579564"
 
   validation {
     condition     = can(regex("^[0-9]{12}$", var.account_id))
@@ -77,20 +77,19 @@ variable "log_retention_days" {
   default     = 30
 }
 
-variable "api_throttle_rate" {
-  description = "Steady-state requests per second allowed by the API stage."
-  type        = number
-  default     = 100
-}
-
-variable "api_throttle_burst" {
-  description = "Short API request burst allowance."
-  type        = number
-  default     = 200
-}
-
 variable "cors_allow_origins" {
-  description = "Browser origins allowed to call the API. Leave empty for server-to-server only."
+  description = "Browser origins allowed to call the HTTP API. Leave empty for server-to-server only."
   type        = list(string)
   default     = []
+}
+
+variable "api_domain_name" {
+  description = "Regional API Gateway custom domain covered by the ACM certificate."
+  type        = string
+  default     = "validate-email.cdssandbox.xyz"
+
+  validation {
+    condition     = can(regex("^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$", var.api_domain_name))
+    error_message = "api_domain_name must be a lowercase fully qualified domain name."
+  }
 }
