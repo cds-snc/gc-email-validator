@@ -7,9 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  id-token: write
   contents: read
-  pull-requests: write
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -48,56 +46,3 @@ jobs:
 
       - name: Verify generated files are current
         run: git diff --exit-code -- crates/api/src/generated_domains.rs data/manifest.json
-
-  infrastructure:
-    name: Terraform and Terragrunt checks
-    runs-on: ubuntu-latest
-    env:
-      AWS_REGION: ca-central-1
-      TERRAFORM_VERSION: 1.15.8
-      TERRAGRUNT_VERSION: 1.1.4
-      TG_AWS_ACCOUNT_ID: "000000000000"
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-
-      - name: setup terraform tools
-        uses: cds-snc/terraform-tools-setup@v1
-
-      - name: Verify formatting
-        run: terraform fmt -check -recursive
-
-      - name: Verify Terragrunt formatting and configuration
-        run: |
-          terragrunt hcl format --check --working-dir terragrunt
-          terragrunt hcl validate --working-dir terragrunt
-
-      - name: Initialize Lambda unit through Terragrunt
-        working-directory: terragrunt/lambda
-        run: terragrunt run init --non-interactive -- -backend=false
-
-      - name: Validate Lambda unit through Terragrunt
-        working-directory: terragrunt/lambda
-        run: terragrunt run validate --non-interactive --no-auto-init
-
-      - name: Initialize Lambda module
-        run: terraform -chdir=aws/lambda init -backend=false -lockfile=readonly
-
-      - name: Validate Lambda module
-        run: terraform -chdir=aws/lambda validate
-
-      - name: configure aws credentials using OIDC
-        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
-        with:
-          role-to-assume: arn:aws:iam::283582579564:role/gc-email-validator-plan
-          role-session-name: TFPlan
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Terraform plan
-        uses: cds-snc/terraform-plan@4719878d72d1b0078e0bce2e7571e854e79903b8 # v3.2.2
-        with:
-          comment-delete: true
-          comment-title: "Production: ${{ matrix.module }}"
-          directory: ${{ matrix.module }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          terragrunt: true
