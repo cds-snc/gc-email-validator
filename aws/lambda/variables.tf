@@ -77,20 +77,8 @@ variable "log_retention_days" {
   default     = 30
 }
 
-variable "api_throttle_rate" {
-  description = "Steady-state requests per second allowed by the API stage."
-  type        = number
-  default     = 100
-}
-
-variable "api_throttle_burst" {
-  description = "Short API request burst allowance."
-  type        = number
-  default     = 200
-}
-
 variable "cors_allow_origins" {
-  description = "Browser origins allowed to call the API. Leave empty for server-to-server only."
+  description = "Browser origins allowed to call the Function URL. Leave empty for server-to-server only."
   type        = list(string)
   default     = []
 }
