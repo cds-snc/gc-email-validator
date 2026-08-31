@@ -3,6 +3,18 @@ use lambda_http::{Body, http::Request, http::StatusCode};
 use serde_json::Value;
 
 #[tokio::test]
+async fn function_url_event_is_supported() {
+    let request =
+        lambda_http::request::from_str(include_str!("../../../events/classify.json")).unwrap();
+
+    assert_eq!(request.method(), "POST");
+    assert_eq!(request.uri().path(), "/v1/email-domain-classifications");
+
+    let response = handle_request(request).await.unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+}
+
+#[tokio::test]
 async fn post_returns_a_classification_without_echoing_the_address() {
     let request = Request::builder()
         .method("POST")
