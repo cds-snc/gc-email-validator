@@ -134,6 +134,7 @@ configure these environment variables:
 | `AWS_REGION` | `ca-central-1` | AWS deployment and state region |
 | `AWS_ROLE_ARN` | external provisioning output | OIDC deployment role |
 | `TF_STATE_BUCKET` | Terragrunt backend name | versioned Terraform state bucket |
+| `ENABLE_CUSTOM_DOMAIN` | `false` initially | Creates the API Gateway domain after ACM validation |
 
 No AWS secrets are stored in GitHub.
 
@@ -160,26 +161,47 @@ terragrunt backend bootstrap
 The GitHub OIDC provider and deployment role are created by an external
 process. That role must be allowed to read and write objects in the selected
 state bucket and deploy the service resources. In addition to the existing
-Lambda, IAM-role, and CloudWatch Logs permissions, it needs the Lambda Function
-URL configuration actions (`CreateFunctionUrlConfig`, `GetFunctionUrlConfig`,
-`UpdateFunctionUrlConfig`, `DeleteFunctionUrlConfig`) and permission-policy
-actions (`AddPermission`, `RemovePermission`) on this service's Lambda
-functions. Put its ARN, the account ID, state bucket name, and region into the
-protected GitHub environment described above. CI and the deployment workflow
-never create identity infrastructure or run backend bootstrap.
+Lambda, IAM-role, CloudWatch Logs, and Lambda permission-policy actions, it
+needs permission to manage API Gateway v2 APIs, integrations, routes, stages,
+custom domains, and API mappings, plus the ACM certificate lifecycle. Put its
+ARN, the account ID, state bucket name, and region into the protected GitHub
+environment described above. CI and the deployment workflow never create
+identity infrastructure or run backend bootstrap.
 
 The reusable application module in [`aws/lambda`](aws/lambda) creates one ARM64
-Lambda with a public Function URL, one bounded-retention log group, and
-least-privilege runtime IAM. [`terragrunt/root.hcl`](terragrunt/root.hcl) generates the
-account-specific AWS provider and S3 backend, while
+Lambda ZIP deployment, a Regional API Gateway HTTP API, an ACM certificate in
+`ca-central-1`, one bounded-retention log group, and least-privilege runtime
+IAM. [`terragrunt/root.hcl`](terragrunt/root.hcl) generates the account-specific
+AWS provider and S3 backend, while
 [`terragrunt/lambda/terragrunt.hcl`](terragrunt/lambda/terragrunt.hcl) connects
 the module to the locally built Lambda ZIP. Its default 128 MB memory, no
-database, no NAT gateway, and no API Gateway make the design inexpensive at low
-traffic and horizontally scalable at Lambda limits. The Function URL uses
-`NONE` authorization and is therefore public. Set reserved Lambda concurrency
-when an account-level concurrency cap is required; Function URLs do not provide
-API Gateway-style rate throttling, usage plans, WAF integration, or custom
-domains.
+database, and no NAT gateway keep the design inexpensive at low traffic and
+horizontally scalable at Lambda limits.
+
+### Certificate and custom-domain activation
+
+Certificate validation is intentionally a two-apply process so CI does not
+wait for an external DNS change:
+
+1. Leave `ENABLE_CUSTOM_DOMAIN=false` and apply. The service is available at
+   the `execute-api` URL while ACM requests a certificate for
+   `validate-email.cdssandbox.xyz`.
+2. Read the validation record and create that CNAME with the DNS provider:
+
+   ```shell
+   cd terragrunt/lambda
+   terragrunt output certificate_dns_validation_records
+   ```
+
+3. Wait until `terragrunt output -raw certificate_status` returns `ISSUED`.
+4. Set the GitHub Actions repository variable `ENABLE_CUSTOM_DOMAIN=true` and
+   manually run the `Terraform apply` workflow on `main` (or export
+   `TG_ENABLE_CUSTOM_DOMAIN=true` locally), then apply again.
+5. Read `terragrunt output custom_domain_dns_target` and create the reported
+   CNAME for `validate-email.cdssandbox.xyz` at the DNS provider.
+
+The certificate and API Gateway endpoint are both Regional resources in
+`ca-central-1`; no `us-east-1` provider or CloudFront distribution is required.
 
 After the bootstrap exists, an authenticated local plan can be run with:
 
@@ -193,8 +215,8 @@ terragrunt run plan
 
 ## Privacy and logging
 
-The Function URL does not add a separate API access-log group. The Rust handler
-does not log request payloads or email addresses. Keep that property when adding
+API Gateway access logging is not enabled, and the Rust handler does not log
+request payloads or email addresses. Keep that property when adding
 observability.
 
 ## Limitations

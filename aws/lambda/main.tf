@@ -64,12 +64,12 @@ resource "aws_lambda_function" "validator" {
   ]
 }
 
-resource "aws_lambda_function_url" "api" {
-  function_name      = aws_lambda_function.validator.function_name
-  authorization_type = "NONE"
-  invoke_mode        = "BUFFERED"
+resource "aws_apigatewayv2_api" "api" {
+  name                         = local.resource_name
+  protocol_type                = "HTTP"
+  disable_execute_api_endpoint = var.enable_custom_domain
 
-  dynamic "cors" {
+  dynamic "cors_configuration" {
     for_each = length(var.cors_allow_origins) == 0 ? [] : [1]
     content {
       allow_origins = var.cors_allow_origins
@@ -78,4 +78,65 @@ resource "aws_lambda_function_url" "api" {
       max_age       = 3600
     }
   }
+}
+
+resource "aws_apigatewayv2_integration" "lambda" {
+  api_id = aws_apigatewayv2_api.api.id
+
+  integration_type       = "AWS_PROXY"
+  integration_uri        = aws_lambda_function.validator.invoke_arn
+  payload_format_version = "2.0"
+  timeout_milliseconds   = var.lambda_timeout_seconds * 1000
+}
+
+resource "aws_apigatewayv2_route" "default" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "$default"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_stage" "default" {
+  api_id      = aws_apigatewayv2_api.api.id
+  name        = "$default"
+  auto_deploy = true
+}
+
+resource "aws_lambda_permission" "api_gateway" {
+  statement_id  = "AllowExecutionFromApiGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.validator.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.api.execution_arn}/*"
+}
+
+resource "aws_acm_certificate" "api" {
+  domain_name       = var.api_domain_name
+  validation_method = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+# ACM certificates cannot be attached to API Gateway until DNS validation has
+# completed. Create the certificate first, publish the output validation CNAME,
+# and enable this resource in a subsequent apply once ACM reports ISSUED.
+resource "aws_apigatewayv2_domain_name" "api" {
+  count = var.enable_custom_domain ? 1 : 0
+
+  domain_name = var.api_domain_name
+
+  domain_name_configuration {
+    certificate_arn = aws_acm_certificate.api.arn
+    endpoint_type   = "REGIONAL"
+    security_policy = "TLS_1_2"
+  }
+}
+
+resource "aws_apigatewayv2_api_mapping" "api" {
+  count = var.enable_custom_domain ? 1 : 0
+
+  api_id      = aws_apigatewayv2_api.api.id
+  domain_name = aws_apigatewayv2_domain_name.api[0].id
+  stage       = aws_apigatewayv2_stage.default.id
 }

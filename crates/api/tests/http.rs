@@ -3,7 +3,7 @@ use lambda_http::{Body, http::Request, http::StatusCode};
 use serde_json::Value;
 
 #[tokio::test]
-async fn function_url_event_is_supported() {
+async fn http_api_v2_event_is_supported() {
     let request =
         lambda_http::request::from_str(include_str!("../../../events/classify.json")).unwrap();
 

@@ -78,7 +78,24 @@ variable "log_retention_days" {
 }
 
 variable "cors_allow_origins" {
-  description = "Browser origins allowed to call the Function URL. Leave empty for server-to-server only."
+  description = "Browser origins allowed to call the HTTP API. Leave empty for server-to-server only."
   type        = list(string)
   default     = []
+}
+
+variable "api_domain_name" {
+  description = "Regional API Gateway custom domain covered by the ACM certificate."
+  type        = string
+  default     = "validate-email.cdssandbox.xyz"
+
+  validation {
+    condition     = can(regex("^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$", var.api_domain_name))
+    error_message = "api_domain_name must be a lowercase fully qualified domain name."
+  }
+}
+
+variable "enable_custom_domain" {
+  description = "Attach the ACM certificate and map the custom domain after DNS validation completes."
+  type        = bool
+  default     = false
 }

@@ -7,10 +7,10 @@
     "content-type": "application/json"
   },
   "requestContext": {
-    "accountId": "anonymous",
-    "apiId": "local-function-url",
-    "domainName": "local-function-url.lambda-url.ca-central-1.on.aws",
-    "domainPrefix": "local-function-url",
+    "accountId": "000000000000",
+    "apiId": "local-http-api",
+    "domainName": "local-http-api.execute-api.ca-central-1.amazonaws.com",
+    "domainPrefix": "local-http-api",
     "http": {
       "method": "POST",
       "path": "/v1/email-domain-classifications",
