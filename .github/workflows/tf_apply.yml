@@ -1,0 +1,90 @@
+name: Terraform apply
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "aws/**"
+      - "terragrunt/**"
+      - ".github/workflows/tf_apply.yml"
+      - "crates/**"
+      - "data/**"
+
+env:
+  AWS_REGION: ca-central-1
+  CARGO_LAMBDA_VERSION: 1.9.2
+  CARGO_LAMBDA_SHA256: b5c258c424ebaef39541c3641f33c51137ee6c426016f365628fedb2c737271d
+  CARGO_TERM_COLOR: always
+  ZIG_VERSION: 0.15.2
+  ZIG_SHA256: 02aa270f183da276e5b5920b1dac44a63f1a49e55050ebde3aecc9eb82f93239
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  terragrunt-apply:
+    if: github.ref == 'refs/heads/main'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - module: lambda
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@6c977a6ca4077a0ceb28ffbe03f59d46e9ac8772
+        with:
+          toolchain: 1.98.0
+
+      - name: Install cargo-lambda
+        run: |
+          archive="cargo-lambda-v${CARGO_LAMBDA_VERSION}.x86_64-unknown-linux-musl.tar.gz"
+          curl --fail --location --show-error --silent \
+            "https://github.com/cargo-lambda/cargo-lambda/releases/download/v${CARGO_LAMBDA_VERSION}/${archive}" \
+            --output "/tmp/${archive}"
+          echo "${CARGO_LAMBDA_SHA256}  /tmp/${archive}" | sha256sum --check
+          tar --extract --gzip --file "/tmp/${archive}" cargo-lambda
+          sudo install -m 0755 cargo-lambda /usr/local/bin/cargo-lambda
+
+      - name: Install Zig cross-linker
+        run: |
+          archive="zig-x86_64-linux-${ZIG_VERSION}.tar.xz"
+          curl --fail --location --show-error --silent \
+            "https://ziglang.org/download/${ZIG_VERSION}/${archive}" \
+            --output "/tmp/${archive}"
+          echo "${ZIG_SHA256}  /tmp/${archive}" | sha256sum --check
+          sudo mkdir /opt/zig
+          sudo tar --extract --xz --file "/tmp/${archive}" --directory /opt/zig --strip-components=1
+          sudo ln --symbolic /opt/zig/zig /usr/local/bin/zig
+
+      - name: Build Lambda package
+        run: |
+          cargo lambda build --locked --release --arm64 --package gc-email-validator --output-format zip
+          mkdir -p build
+          cp target/lambda/gc-email-validator/bootstrap.zip build/lambda.zip
+
+      - name: Setup Terraform tools
+        uses: cds-snc/terraform-tools-setup@36df0d7572a15921998170395475093c183d720a # v1.3.0
+        env:
+          CONFTEST_VERSION: 0.49.0
+          TERRAFORM_VERSION: 1.15.5
+          TERRAGRUNT_VERSION: 1.1.1
+
+      - name: configure aws credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        with:
+          role-to-assume: arn:aws:iam::283582579564:role/gc-email-validator-apply
+          role-session-name: TFApply
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Apply Terragrunt unit
+        env:
+          TG_LAMBDA_ZIP_PATH: ${{ github.workspace }}/build/lambda.zip
+        working-directory: terragrunt/lambda
+        run: terragrunt run apply --backend-require-bootstrap --non-interactive -- -auto-approve -input=false

@@ -313,6 +313,17 @@ mod tests {
     }
 
     #[test]
+    fn recognizes_service_canada_when_status_is_unspecified() {
+        let result = classify_email("person@servicecanada.gc.ca").unwrap();
+        assert!(result.is_government_of_canada);
+        assert_eq!(result.matched_domain, Some("servicecanada.gc.ca"));
+        assert_eq!(
+            result.organization.as_ref().map(|org| org.name_en),
+            Some("Service Canada")
+        );
+    }
+
+    #[test]
     fn distinguishes_namespace_ownership_from_a_recognized_domain() {
         let result = classify_email("person@unlisted.canada.ca").unwrap();
         assert!(!result.is_government_of_canada);

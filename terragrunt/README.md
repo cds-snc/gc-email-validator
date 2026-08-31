@@ -19,6 +19,7 @@ Terragrunt reads these environment variables:
 - `TG_ENVIRONMENT` (default `production`)
 - `TG_STATE_BUCKET`
 - `TG_LAMBDA_ZIP_PATH` (default `build/lambda.zip`)
+- `TG_API_DOMAIN_NAME` (default `validate-email.cdssandbox.xyz`)
 
 To establish a new backend, export the account ID, then run:
 
@@ -30,3 +31,7 @@ terragrunt backend bootstrap
 Backend bootstrap is a local, privileged operation. The external deployment
 role must be granted access to this state bucket before CI deployment is
 enabled.
+
+The application apply creates the Regional HTTP API and its custom-domain
+mapping using the validated ACM certificate in `ca-central-1`. The
+`custom_domain_dns_target` output is the CNAME target for the public hostname.
