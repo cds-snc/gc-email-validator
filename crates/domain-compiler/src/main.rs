@@ -495,7 +495,7 @@ fn verify_source_hash(
     expected: &str,
     file: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let actual = format!("{:x}", Sha256::digest(bytes));
+    let actual = encode_hex(Sha256::digest(bytes));
     if actual != expected {
         return Err(format!("{file} SHA-256 mismatch: expected {expected}, got {actual}").into());
     }
@@ -515,7 +515,19 @@ fn dataset_version(inputs: &[(&Path, &[u8])]) -> String {
         hasher.update(bytes);
         hasher.update([0]);
     }
-    format!("sha256:{:x}", hasher.finalize())
+    format!("sha256:{}", encode_hex(hasher.finalize()))
+}
+
+fn encode_hex(bytes: impl AsRef<[u8]>) -> String {
+    const HEX: &[u8; 16] = b"0123456789abcdef";
+
+    let bytes = bytes.as_ref();
+    let mut encoded = String::with_capacity(bytes.len() * 2);
+    for byte in bytes {
+        encoded.push(HEX[(byte >> 4) as usize] as char);
+        encoded.push(HEX[(byte & 0x0f) as usize] as char);
+    }
+    encoded
 }
 
 fn render_generated<'a>(
@@ -570,6 +582,11 @@ fn write_if_changed(path: &Path, contents: &[u8]) -> Result<(), std::io::Error> 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn explicitly_hex_encodes_digest_bytes() {
+        assert_eq!(encode_hex([0x00, 0x0f, 0x10, 0xff]), "000f10ff");
+    }
 
     #[test]
     fn extracts_domains_from_alias_formats() {
