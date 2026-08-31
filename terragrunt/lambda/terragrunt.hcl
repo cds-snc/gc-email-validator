@@ -14,6 +14,5 @@ inputs = {
     abspath("${get_terragrunt_dir()}/../../build/lambda.zip")
   )
 
-  api_domain_name      = get_env("TG_API_DOMAIN_NAME", "validate-email.cdssandbox.xyz")
-  enable_custom_domain = get_env("TG_ENABLE_CUSTOM_DOMAIN", "false") == "true"
+  api_domain_name = get_env("TG_API_DOMAIN_NAME", "validate-email.cdssandbox.xyz")
 }

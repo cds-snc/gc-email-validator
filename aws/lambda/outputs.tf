@@ -1,15 +1,11 @@
 output "api_endpoint" {
-  description = "Base API endpoint. Uses the execute-api URL until the validated custom domain is enabled."
-  value = var.enable_custom_domain ? (
-    "https://${var.api_domain_name}"
-  ) : trimsuffix(aws_apigatewayv2_stage.default.invoke_url, "/")
+  description = "Base API custom-domain endpoint."
+  value       = "https://${var.api_domain_name}"
 }
 
 output "classification_endpoint" {
   description = "Full classification endpoint."
-  value = var.enable_custom_domain ? (
-    "https://${var.api_domain_name}/v1/email-domain-classifications"
-  ) : "${trimsuffix(aws_apigatewayv2_stage.default.invoke_url, "/")}/v1/email-domain-classifications"
+  value       = "https://${var.api_domain_name}/v1/email-domain-classifications"
 }
 
 output "lambda_function_name" {
@@ -23,7 +19,7 @@ output "certificate_arn" {
 }
 
 output "certificate_status" {
-  description = "Current ACM certificate status. Enable the custom domain only after this is ISSUED."
+  description = "Current ACM certificate status."
   value       = aws_acm_certificate.api.status
 }
 
@@ -39,10 +35,10 @@ output "certificate_dns_validation_records" {
 }
 
 output "custom_domain_dns_target" {
-  description = "CNAME target for the public API hostname. Available after the custom domain is enabled."
-  value = var.enable_custom_domain ? {
+  description = "CNAME target for the public API hostname."
+  value = {
     name  = var.api_domain_name
     type  = "CNAME"
-    value = aws_apigatewayv2_domain_name.api[0].domain_name_configuration[0].target_domain_name
-  } : null
+    value = aws_apigatewayv2_domain_name.api.domain_name_configuration[0].target_domain_name
+  }
 }

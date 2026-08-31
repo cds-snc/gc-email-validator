@@ -93,9 +93,3 @@ variable "api_domain_name" {
     error_message = "api_domain_name must be a lowercase fully qualified domain name."
   }
 }
-
-variable "enable_custom_domain" {
-  description = "Attach the ACM certificate and map the custom domain after DNS validation completes."
-  type        = bool
-  default     = false
-}
