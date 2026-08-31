@@ -1,7 +1,7 @@
 variable "account_id" {
   description = "AWS account ID allowed by the generated Terragrunt provider."
   type        = string
-  default     = "000000000000"
+  default     = "283582579564"
 
   validation {
     condition     = can(regex("^[0-9]{12}$", var.account_id))
@@ -77,20 +77,8 @@ variable "log_retention_days" {
   default     = 30
 }
 
-variable "api_throttle_rate" {
-  description = "Steady-state requests per second allowed by the API stage."
-  type        = number
-  default     = 100
-}
-
-variable "api_throttle_burst" {
-  description = "Short API request burst allowance."
-  type        = number
-  default     = 200
-}
-
 variable "cors_allow_origins" {
-  description = "Browser origins allowed to call the API. Leave empty for server-to-server only."
+  description = "Browser origins allowed to call the Function URL. Leave empty for server-to-server only."
   type        = list(string)
   default     = []
 }

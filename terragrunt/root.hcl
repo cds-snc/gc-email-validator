@@ -1,5 +1,5 @@
 locals {
-  account_id   = get_env("TG_AWS_ACCOUNT_ID")
+  account_id   = get_env("TG_AWS_ACCOUNT_ID", "283582579564")
   environment  = get_env("TG_ENVIRONMENT", "production")
   region       = get_env("TG_AWS_REGION", "ca-central-1")
   service_name = "gc-email-validator"

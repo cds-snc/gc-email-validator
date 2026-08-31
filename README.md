@@ -158,20 +158,27 @@ terragrunt backend bootstrap
 
 The GitHub OIDC provider and deployment role are created by an external
 process. That role must be allowed to read and write objects in the selected
-state bucket and deploy the service resources. Put its ARN, the account ID,
-state bucket name, and region into the protected GitHub environment described
-above. CI and the deployment workflow never create identity infrastructure or
-run backend bootstrap.
+state bucket and deploy the service resources. In addition to the existing
+Lambda, IAM-role, and CloudWatch Logs permissions, it needs the Lambda Function
+URL configuration actions (`CreateFunctionUrlConfig`, `GetFunctionUrlConfig`,
+`UpdateFunctionUrlConfig`, `DeleteFunctionUrlConfig`) and permission-policy
+actions (`AddPermission`, `RemovePermission`) on this service's Lambda
+functions. Put its ARN, the account ID, state bucket name, and region into the
+protected GitHub environment described above. CI and the deployment workflow
+never create identity infrastructure or run backend bootstrap.
 
 The reusable application module in [`aws/lambda`](aws/lambda) creates one ARM64
-Lambda, one HTTP API, two bounded-retention log groups, and least-privilege
-runtime IAM. [`terragrunt/root.hcl`](terragrunt/root.hcl) generates the
+Lambda with a public Function URL, one bounded-retention log group, and
+least-privilege runtime IAM. [`terragrunt/root.hcl`](terragrunt/root.hcl) generates the
 account-specific AWS provider and S3 backend, while
 [`terragrunt/lambda/terragrunt.hcl`](terragrunt/lambda/terragrunt.hcl) connects
 the module to the locally built Lambda ZIP. Its default 128 MB memory, no
-database, no NAT gateway, and on-demand HTTP API make the design inexpensive at
-low traffic and horizontally scalable at Lambda/API Gateway limits. Stage
-throttling protects the account from accidental cost spikes.
+database, no NAT gateway, and no API Gateway make the design inexpensive at low
+traffic and horizontally scalable at Lambda limits. The Function URL uses
+`NONE` authorization and is therefore public. Set reserved Lambda concurrency
+when an account-level concurrency cap is required; Function URLs do not provide
+API Gateway-style rate throttling, usage plans, WAF integration, or custom
+domains.
 
 After the bootstrap exists, an authenticated local plan can be run with:
 
@@ -185,9 +192,9 @@ terragrunt run plan
 
 ## Privacy and logging
 
-The API Gateway access-log format contains route, status, size, and latency but
-not request bodies, query strings, headers, or email addresses. The Rust handler
-does not log request payloads. Keep that property when adding observability.
+The Function URL does not add a separate API access-log group. The Rust handler
+does not log request payloads or email addresses. Keep that property when adding
+observability.
 
 ## Limitations
 

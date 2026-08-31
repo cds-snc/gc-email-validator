@@ -1,16 +1,16 @@
 {
   "version": "2.0",
-  "routeKey": "POST /v1/email-domain-classifications",
+  "routeKey": "$default",
   "rawPath": "/v1/email-domain-classifications",
   "rawQueryString": "",
   "headers": {
     "content-type": "application/json"
   },
   "requestContext": {
-    "accountId": "123456789012",
-    "apiId": "local",
-    "domainName": "localhost",
-    "domainPrefix": "localhost",
+    "accountId": "anonymous",
+    "apiId": "local-function-url",
+    "domainName": "local-function-url.lambda-url.ca-central-1.on.aws",
+    "domainPrefix": "local-function-url",
     "http": {
       "method": "POST",
       "path": "/v1/email-domain-classifications",
@@ -19,7 +19,7 @@
       "userAgent": "cargo-lambda"
     },
     "requestId": "local-request",
-    "routeKey": "POST /v1/email-domain-classifications",
+    "routeKey": "$default",
     "stage": "$default",
     "time": "29/Aug/2026:00:00:00 +0000",
     "timeEpoch": 1787961600000
@@ -27,4 +27,3 @@
   "body": "{\"email\":\"person@statcan.gc.ca\"}",
   "isBase64Encoded": false
 }
-
