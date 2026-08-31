@@ -19,7 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - module: terraform
+          - module: lambda
 
     runs-on: ubuntu-latest
     steps:
@@ -45,6 +45,6 @@ jobs:
         with:
           comment-delete: true
           comment-title: "Production: ${{ matrix.module }}"
-          directory: ${{ matrix.module }}
+          directory: "terragrunt/${{ matrix.module }}"
           github-token: ${{ secrets.GITHUB_TOKEN }}
           terragrunt: true
