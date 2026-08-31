@@ -67,7 +67,7 @@ resource "aws_lambda_function" "validator" {
 resource "aws_apigatewayv2_api" "api" {
   name                         = local.resource_name
   protocol_type                = "HTTP"
-  disable_execute_api_endpoint = var.enable_custom_domain
+  disable_execute_api_endpoint = true
 
   dynamic "cors_configuration" {
     for_each = length(var.cors_allow_origins) == 0 ? [] : [1]
@@ -118,12 +118,7 @@ resource "aws_acm_certificate" "api" {
   }
 }
 
-# ACM certificates cannot be attached to API Gateway until DNS validation has
-# completed. Create the certificate first, publish the output validation CNAME,
-# and enable this resource in a subsequent apply once ACM reports ISSUED.
 resource "aws_apigatewayv2_domain_name" "api" {
-  count = var.enable_custom_domain ? 1 : 0
-
   domain_name = var.api_domain_name
 
   domain_name_configuration {
@@ -134,9 +129,7 @@ resource "aws_apigatewayv2_domain_name" "api" {
 }
 
 resource "aws_apigatewayv2_api_mapping" "api" {
-  count = var.enable_custom_domain ? 1 : 0
-
   api_id      = aws_apigatewayv2_api.api.id
-  domain_name = aws_apigatewayv2_domain_name.api[0].id
+  domain_name = aws_apigatewayv2_domain_name.api.id
   stage       = aws_apigatewayv2_stage.default.id
 }

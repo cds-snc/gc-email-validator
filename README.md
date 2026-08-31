@@ -134,7 +134,6 @@ configure these environment variables:
 | `AWS_REGION` | `ca-central-1` | AWS deployment and state region |
 | `AWS_ROLE_ARN` | external provisioning output | OIDC deployment role |
 | `TF_STATE_BUCKET` | Terragrunt backend name | versioned Terraform state bucket |
-| `ENABLE_CUSTOM_DOMAIN` | `false` initially | Creates the API Gateway domain after ACM validation |
 
 No AWS secrets are stored in GitHub.
 
@@ -178,27 +177,19 @@ the module to the locally built Lambda ZIP. Its default 128 MB memory, no
 database, and no NAT gateway keep the design inexpensive at low traffic and
 horizontally scalable at Lambda limits.
 
-### Certificate and custom-domain activation
+### Custom-domain activation
 
-Certificate validation is intentionally a two-apply process so CI does not
-wait for an external DNS change:
+The validated ACM certificate is attached to the Regional API Gateway custom
+domain on the next apply. Afterward, read the DNS target:
 
-1. Leave `ENABLE_CUSTOM_DOMAIN=false` and apply. The service is available at
-   the `execute-api` URL while ACM requests a certificate for
-   `validate-email.cdssandbox.xyz`.
-2. Read the validation record and create that CNAME with the DNS provider:
+```shell
+cd terragrunt/lambda
+terragrunt output custom_domain_dns_target
+```
 
-   ```shell
-   cd terragrunt/lambda
-   terragrunt output certificate_dns_validation_records
-   ```
-
-3. Wait until `terragrunt output -raw certificate_status` returns `ISSUED`.
-4. Set the GitHub Actions repository variable `ENABLE_CUSTOM_DOMAIN=true` and
-   manually run the `Terraform apply` workflow on `main` (or export
-   `TG_ENABLE_CUSTOM_DOMAIN=true` locally), then apply again.
-5. Read `terragrunt output custom_domain_dns_target` and create the reported
-   CNAME for `validate-email.cdssandbox.xyz` at the DNS provider.
+Create the reported CNAME for `validate-email.cdssandbox.xyz` at the DNS
+provider. The default `execute-api` endpoint is disabled, so requests use only
+the custom hostname.
 
 The certificate and API Gateway endpoint are both Regional resources in
 `ca-central-1`; no `us-east-1` provider or CloudFront distribution is required.

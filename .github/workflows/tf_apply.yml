@@ -86,6 +86,5 @@ jobs:
       - name: Apply Terragrunt unit
         env:
           TG_LAMBDA_ZIP_PATH: ${{ github.workspace }}/build/lambda.zip
-          TG_ENABLE_CUSTOM_DOMAIN: ${{ vars.ENABLE_CUSTOM_DOMAIN || 'false' }}
         working-directory: terragrunt/lambda
         run: terragrunt run apply --backend-require-bootstrap --non-interactive -- -auto-approve -input=false
