@@ -64,7 +64,7 @@ struct Policy {
 struct ExternalDomain {
     domain: String,
     gc_org_id: u32,
-    #[serde(default = "default_true")]
+    #[serde(default)]
     include_subdomains: bool,
 }
 
@@ -343,7 +343,7 @@ fn load_alias_rules(
 
         let include_subdomains = external_specification
             .map(|specification| specification.include_subdomains)
-            .unwrap_or(true);
+            .unwrap_or(false);
         insert_rule(
             rules,
             Rule {

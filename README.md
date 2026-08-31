@@ -35,8 +35,9 @@ Example response:
 
 The service deliberately returns two related values:
 
-- `isGovernmentOfCanada` is true only when an exact domain or label-boundary
-  parent domain is present in the reviewed, compiled list.
+- `isGovernmentOfCanada` is true only when the exact domain is present in the
+  reviewed, compiled list, unless a parent domain has been explicitly approved
+  to include its subdomains.
 - `isGovernmentControlledNamespace` is true for any syntactically valid domain
   beneath a configured namespace such as `gc.ca` or `canada.ca`, even if that
   specific domain is not in the current email-domain list.
@@ -59,9 +60,12 @@ The generated list uses three inputs:
 The compiler accepts an alias only when its organization appears in the
 concordance and is not explicitly marked terminated (`t`) in the organization
 metadata. Blank or unspecified statuses remain eligible. Domains under `gc.ca`
-and `canada.ca` are eligible by default. Any external domain must appear both
-in the upstream alias data and in the local policy for the same organization
-ID. This avoids treating every organization website as an email domain.
+and `canada.ca` are eligible as exact domains by default; their unlisted child
+domains are not inherited. The `canada.ca` root is recognized, while `gc.ca`
+is deliberately classified only as a controlled namespace. Any external domain
+must appear both in the upstream alias data and in the local policy for the
+same organization ID. This avoids treating every organization website as an
+email domain.
 
 Source snapshots and their SHA-256 hashes are checked in under `data/upstream`.
 [`data/manifest.json`](data/manifest.json) records the resulting version and

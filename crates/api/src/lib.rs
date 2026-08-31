@@ -301,15 +301,33 @@ mod tests {
     use super::*;
 
     #[test]
-    fn recognizes_exact_and_child_domains_case_insensitively() {
+    fn recognizes_exact_domains_case_insensitively() {
         let exact = classify_email("Ada.Lovelace@STATCAN.GC.CA").unwrap();
         assert!(exact.is_government_of_canada);
         assert_eq!(exact.domain, "statcan.gc.ca");
         assert_eq!(exact.matched_domain, Some("statcan.gc.ca"));
+    }
 
-        let child = classify_email("ada@mail.statcan.gc.ca").unwrap();
-        assert!(child.is_government_of_canada);
-        assert_eq!(child.matched_domain, Some("statcan.gc.ca"));
+    #[test]
+    fn rejects_unlisted_children_of_recognized_domains() {
+        let child = classify_email("attacker@foo.statcan.gc.ca").unwrap();
+        assert!(!child.is_government_of_canada);
+        assert!(child.is_government_controlled_namespace);
+        assert_eq!(child.matched_domain, None);
+        assert_eq!(child.match_type, MatchType::NamespaceOnly);
+    }
+
+    #[test]
+    fn recognizes_canada_ca_but_not_gc_ca() {
+        let canada = classify_email("person@canada.ca").unwrap();
+        assert!(canada.is_government_of_canada);
+        assert_eq!(canada.matched_domain, Some("canada.ca"));
+
+        let gc = classify_email("attacker@gc.ca").unwrap();
+        assert!(!gc.is_government_of_canada);
+        assert!(gc.is_government_controlled_namespace);
+        assert_eq!(gc.matched_domain, None);
+        assert_eq!(gc.match_type, MatchType::NamespaceOnly);
     }
 
     #[test]
