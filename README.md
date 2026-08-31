@@ -56,11 +56,12 @@ The generated list uses three inputs:
 2. [`gcorg-resolver`](https://github.com/cds-snc/gcorg-resolver) maintains snapshots of those two official files and supplies the curated domain-like aliases. The refresh process downloads all three CSVs from one immutable repository commit, ensuring they form an internally consistent snapshot.
 3. [`data/domain-policy.yaml`](data/domain-policy.yaml) defines controlled namespace roots, exact exclusions, and explicitly reviewed domains outside those roots.
 
-The compiler accepts an alias only when its organization is active and appears
-in the concordance. Domains under `gc.ca` and `canada.ca` are eligible by
-default. Any external domain must appear both in the upstream alias data and in
-the local policy for the same organization ID. This avoids treating every
-organization website as an email domain.
+The compiler accepts an alias only when its organization appears in the
+concordance and is not explicitly marked terminated (`t`) in the organization
+metadata. Blank or unspecified statuses remain eligible. Domains under `gc.ca`
+and `canada.ca` are eligible by default. Any external domain must appear both
+in the upstream alias data and in the local policy for the same organization
+ID. This avoids treating every organization website as an email domain.
 
 Source snapshots and their SHA-256 hashes are checked in under `data/upstream`.
 [`data/manifest.json`](data/manifest.json) records the resulting version and
@@ -200,7 +201,8 @@ observability.
 
 - Upstream aliases are curated evidence, not a formal inventory of every email
   domain used by every federal organization.
-- The active flag is organization-level; an old alias can remain upstream.
+- The status is organization-level; an old alias can remain upstream even when
+  its organization is not explicitly marked terminated.
   Suspicious or retired domains should be placed in `excluded_domains` while an
   upstream correction is pursued.
 - Crown corporations and other entities using domains outside `gc.ca` and
