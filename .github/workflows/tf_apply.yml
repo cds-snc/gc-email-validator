@@ -65,9 +65,9 @@ jobs:
 
       - name: Build Lambda package
         run: |
-          cargo lambda build --locked --release --arm64 --package gc-email-validator --output-format zip
+          cargo lambda build --locked --release --arm64 --package gc-email-validator --bin gc-email-validator-lambda --output-format zip
           mkdir -p build
-          cp target/lambda/gc-email-validator/bootstrap.zip build/lambda.zip
+          cp target/lambda/gc-email-validator-lambda/bootstrap.zip build/lambda.zip
 
       - name: Setup Terraform tools
         uses: cds-snc/terraform-tools-setup@36df0d7572a15921998170395475093c183d720a # v1.3.0

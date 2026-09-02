@@ -105,11 +105,47 @@ To build the Lambda zip:
 make deploy-package
 ```
 
+To build and run the command-line executable locally:
+
+```shell
+make cli
+./target/release/gc-email-validator person@statcan.gc.ca
+```
+
+The CLI writes the same classification JSON as the API to standard output:
+
+```json
+{
+  "isGovernmentOfCanada": true,
+  "isGovernmentControlledNamespace": true,
+  "domain": "statcan.gc.ca",
+  "matchedDomain": "statcan.gc.ca",
+  "matchType": "recognizedDomain",
+  "organization": {
+    "gcOrgId": 2293,
+    "nameEn": "Statistics Canada",
+    "nameFr": "Statistique Canada"
+  },
+  "datasetVersion": "sha256:..."
+}
+```
+
+Valid non-Government classifications also exit successfully because the
+classification itself succeeded. Invalid input writes a JSON error to standard
+error and exits with status 2. Use `--pretty` for formatted output.
+
+Version tags publish static Linux binaries for x86-64 and ARM64 to
+[GitHub Releases](https://github.com/cds-snc/gc-email-validator/releases),
+along with `SHA256SUMS`. The archives can be unpacked into an Alpine, Debian,
+Ubuntu, distroless, or scratch-based container without installing Rust or
+shared runtime libraries. Each executable contains the dataset version shown
+in its JSON output; upgrade the pinned release to receive data updates.
+
 For local Lambda emulation:
 
 ```shell
-cargo lambda watch --package gc-email-validator
-cargo lambda invoke gc-email-validator --data-file events/classify.json
+cargo lambda watch --package gc-email-validator --bin gc-email-validator-lambda
+cargo lambda invoke gc-email-validator-lambda --data-file events/classify.json
 ```
 
 ## CI/CD
@@ -123,6 +159,8 @@ conventions:
 - `Refresh domain data` runs daily and opens or updates a pull request only when
   the compiled dataset changes. Reviewers can inspect the domain and provenance
   diff before merging.
+- `Release CLI` publishes static, checksummed Linux x86-64 and ARM64 binaries
+  when a semantic version tag matching the Cargo package version is pushed.
 - `Deploy` runs only after a successful `CI` run on `main`, or manually. It
   builds an ARM64 `provided.al2023` Lambda ZIP and applies the
   `terragrunt/lambda` unit through GitHub OIDC. It does not create an ECR

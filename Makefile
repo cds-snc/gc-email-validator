@@ -1,6 +1,6 @@
 CHECK_TG_ENV = TG_AWS_ACCOUNT_ID=000000000000
 
-.PHONY: backend-bootstrap build check clean compile-data deploy-package fmt infrastructure-check refresh test
+.PHONY: backend-bootstrap build check clean cli compile-data deploy-package fmt infrastructure-check refresh test
 
 fmt:
 	cargo fmt --all
@@ -25,10 +25,13 @@ compile-data:
 build:
 	cargo build --workspace
 
+cli:
+	cargo build --release --package gc-email-validator --bin gc-email-validator
+
 deploy-package:
-	cargo lambda build --release --arm64 --package gc-email-validator --output-format zip
+	cargo lambda build --release --arm64 --package gc-email-validator --bin gc-email-validator-lambda --output-format zip
 	mkdir -p build
-	cp target/lambda/gc-email-validator/bootstrap.zip build/lambda.zip
+	cp target/lambda/gc-email-validator-lambda/bootstrap.zip build/lambda.zip
 
 # Run manually with authenticated, privileged AWS credentials. Never run this
 # target from CI: it establishes the remote state backend used by CI.
