@@ -1,0 +1,106 @@
+name: Release CLI
+
+on:
+  push:
+    tags:
+      - "v[0-9]*.[0-9]*.[0-9]*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_ZIGBUILD_VERSION: 0.23.3
+  ZIG_VERSION: 0.15.2
+  ZIG_SHA256: 02aa270f183da276e5b5920b1dac44a63f1a49e55050ebde3aecc9eb82f93239
+
+jobs:
+  release:
+    name: Build and publish static CLI binaries
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@6c977a6ca4077a0ceb28ffbe03f59d46e9ac8772
+        with:
+          toolchain: 1.98.0
+          targets: aarch64-unknown-linux-musl, x86_64-unknown-linux-musl
+
+      - name: Install Zig cross-linker
+        run: |
+          archive="zig-x86_64-linux-${ZIG_VERSION}.tar.xz"
+          curl --fail --location --show-error --silent \
+            "https://ziglang.org/download/${ZIG_VERSION}/${archive}" \
+            --output "/tmp/${archive}"
+          echo "${ZIG_SHA256}  /tmp/${archive}" | sha256sum --check
+          sudo mkdir /opt/zig
+          sudo tar --extract --xz --file "/tmp/${archive}" --directory /opt/zig --strip-components=1
+          sudo ln --symbolic /opt/zig/zig /usr/local/bin/zig
+
+      - name: Install cargo-zigbuild
+        run: cargo install --locked --version "${CARGO_ZIGBUILD_VERSION}" cargo-zigbuild
+
+      - name: Verify release version
+        run: |
+          package_version="$(cargo metadata --locked --no-deps --format-version 1 | jq --raw-output '.packages[] | select(.name == "gc-email-validator") | .version')"
+          if [[ "v${package_version}" != "${GITHUB_REF_NAME}" ]]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match package version v${package_version}" >&2
+            exit 1
+          fi
+
+      - name: Build static binaries
+        run: |
+          for target in x86_64-unknown-linux-musl aarch64-unknown-linux-musl; do
+            cargo zigbuild \
+              --locked \
+              --release \
+              --package gc-email-validator \
+              --bin gc-email-validator \
+              --target "${target}"
+          done
+
+      - name: Package release assets
+        run: |
+          mkdir --parents dist
+          for specification in \
+            "x86_64-unknown-linux-musl linux-x86_64" \
+            "aarch64-unknown-linux-musl linux-aarch64"; do
+            read -r target platform <<< "${specification}"
+            archive_root="gc-email-validator-${GITHUB_REF_NAME}-${platform}"
+            mkdir --parents "dist/${archive_root}"
+            install -m 0755 \
+              "target/${target}/release/gc-email-validator" \
+              "dist/${archive_root}/gc-email-validator"
+            cp LICENSE README.md "dist/${archive_root}/"
+            tar \
+              --create \
+              --gzip \
+              --directory dist \
+              --file "${GITHUB_WORKSPACE}/dist/${archive_root}.tar.gz" \
+              "${archive_root}"
+            rm --recursive "dist/${archive_root}"
+          done
+          cd dist
+          sha256sum ./*.tar.gz > SHA256SUMS
+
+      - name: Smoke test x86-64 binary
+        run: |
+          target/x86_64-unknown-linux-musl/release/gc-email-validator --version
+          target/x86_64-unknown-linux-musl/release/gc-email-validator person@statcan.gc.ca | jq --exit-status '.isGovernmentOfCanada == true'
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create \
+            "${GITHUB_REF_NAME}" \
+            ./dist/* \
+            --generate-notes \
+            --title "${GITHUB_REF_NAME}" \
+            --verify-tag

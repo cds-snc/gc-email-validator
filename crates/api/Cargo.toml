@@ -4,6 +4,7 @@ version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
 publish = false
+default-run = "gc-email-validator"
 
 [dependencies]
 idna.workspace = true
@@ -15,5 +16,8 @@ tokio.workspace = true
 
 [[bin]]
 name = "gc-email-validator"
-path = "src/main.rs"
+path = "src/cli.rs"
 
+[[bin]]
+name = "gc-email-validator-lambda"
+path = "src/main.rs"
