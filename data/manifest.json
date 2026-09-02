@@ -1,5 +1,5 @@
 {
-  "datasetVersion": "sha256:8ebdb78b275d48c2084a76fe5551313fad264be746fb678d744e97ed268e2eef",
+  "datasetVersion": "sha256:17290e0a814a2709136d8ba32426ac641c60cd47c928cf226285bdc0d79deaea",
   "ruleCount": 221,
   "namespaceRoots": [
     "canada.ca",
@@ -7,13 +7,13 @@
   ],
   "source": {
     "sourceRepository": "https://github.com/cds-snc/gcorg-resolver",
-    "sourceCommit": "33290b0100af2a285ff74e9c08f87f628f153f9e",
+    "sourceCommit": "7a66639ca428fa10d9173f1030573a2afeebf4ff",
     "officialDatasetUrl": "https://open.canada.ca/data/en/dataset/57180b36-3428-4a7f-afe3-2161a6b44ec5",
-    "concordanceUrl": "https://raw.githubusercontent.com/cds-snc/gcorg-resolver/33290b0100af2a285ff74e9c08f87f628f153f9e/data/gc_concordance.csv",
-    "orgInfoUrl": "https://raw.githubusercontent.com/cds-snc/gcorg-resolver/33290b0100af2a285ff74e9c08f87f628f153f9e/data/gc_org_info.csv",
-    "aliasesUrl": "https://raw.githubusercontent.com/cds-snc/gcorg-resolver/33290b0100af2a285ff74e9c08f87f628f153f9e/data/gc_org_aliases.csv",
-    "concordanceSha256": "7af1d3867ed407fda822341e8521649f1103952e6768101dcf980e34d502f7e0",
-    "orgInfoSha256": "c37436b687e9cad0c6fa629f43270e292f9995b92d256811af10630b8ede4e3b",
-    "aliasesSha256": "3ebc8b01268733c07c8d33f33b5bdd72fc68af5df6058bf1430c29a95d5b256c"
+    "concordanceUrl": "https://raw.githubusercontent.com/cds-snc/gcorg-resolver/7a66639ca428fa10d9173f1030573a2afeebf4ff/data/gc_concordance.csv",
+    "orgInfoUrl": "https://raw.githubusercontent.com/cds-snc/gcorg-resolver/7a66639ca428fa10d9173f1030573a2afeebf4ff/data/gc_org_info.csv",
+    "aliasesUrl": "https://raw.githubusercontent.com/cds-snc/gcorg-resolver/7a66639ca428fa10d9173f1030573a2afeebf4ff/data/gc_org_aliases.csv",
+    "concordanceSha256": "49326bb3926a6f019c5ba818119c0fff20b16026d292e28d8a5373d393ab53be",
+    "orgInfoSha256": "b83ae986ae43a1b68b6bd57c543197b206ce4ea089098925843d0576d0d03a36",
+    "aliasesSha256": "4d6d1accbe1dcf71aff4ff2461f165584a21656f33fb5566b86b74f30b74bb8e"
   }
 }
