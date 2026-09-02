@@ -157,8 +157,9 @@ conventions:
   Terraform module and Terragrunt configuration validation on pull requests and
   `main`.
 - `Refresh domain data` runs daily and opens or updates a pull request only when
-  the compiled dataset changes. Reviewers can inspect the domain and provenance
-  diff before merging.
+  the compiled dataset changes. Each changed dataset also increments the CLI
+  package patch version and updates `Cargo.lock`. Reviewers can inspect the
+  domain, provenance, and version diff before merging.
 - `Release CLI` publishes static, checksummed Linux x86-64 and ARM64 binaries
   when a semantic version tag matching the Cargo package version is pushed.
 - `Deploy` runs only after a successful `CI` run on `main`, or manually. It
