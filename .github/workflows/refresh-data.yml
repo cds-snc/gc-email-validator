@@ -40,10 +40,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: ./scripts/refresh-data.sh
 
-      - name: Test refreshed data
-        run: cargo test --locked --workspace --all-targets
-
-      - name: Detect changes
+      - name: Detect data changes
         id: changes
         run: |
           if git diff --quiet; then
@@ -52,13 +49,39 @@ jobs:
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Bump package patch version
+        if: steps.changes.outputs.changed == 'true'
+        id: version
+        run: |
+          current_version="$(cargo metadata --locked --no-deps --format-version 1 | jq --raw-output '.packages[] | select(.name == "gc-email-validator") | .version')"
+          if [[ ! "${current_version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Expected a semantic package version, got ${current_version}" >&2
+            exit 1
+          fi
+          IFS=. read -r major minor patch <<< "${current_version}"
+          next_version="${major}.${minor}.$((patch + 1))"
+          sed --in-place \
+            "0,/^version = \"${current_version}\"$/s//version = \"${next_version}\"/" \
+            crates/api/Cargo.toml
+          grep --fixed-strings --line-regexp \
+            "version = \"${next_version}\"" \
+            crates/api/Cargo.toml
+          echo "version=${next_version}" >> "$GITHUB_OUTPUT"
+
+      - name: Refresh lockfile package version
+        if: steps.changes.outputs.changed == 'true'
+        run: cargo check --workspace
+
+      - name: Test refreshed data
+        run: cargo test --locked --workspace --all-targets
+
       - name: Commit update branch
         if: steps.changes.outputs.changed == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -B "$UPDATE_BRANCH"
-          git add data/upstream data/manifest.json crates/api/src/generated_domains.rs Cargo.lock
+          git add data/upstream data/manifest.json crates/api/src/generated_domains.rs crates/api/Cargo.toml Cargo.lock
           git commit -m "chore(data): refresh Government of Canada domains"
           git push --force-with-lease origin "HEAD:$UPDATE_BRANCH"
 
@@ -73,12 +96,16 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          pr_body="Automated refresh of the three data files from one pinned gcorg-resolver commit and patch version bump to v${{ steps.version.outputs.version }}. Review the generated manifest and domain diff before merging."
           if gh pr view "$UPDATE_BRANCH" >/dev/null 2>&1; then
-            gh pr edit "$UPDATE_BRANCH" --title "chore(data): refresh Government of Canada domains"
+            gh pr edit \
+              "$UPDATE_BRANCH" \
+              --title "chore(data): refresh Government of Canada domains" \
+              --body "$pr_body"
           else
             gh pr create \
               --base main \
               --head "$UPDATE_BRANCH" \
               --title "chore(data): refresh Government of Canada domains" \
-              --body "Automated refresh of the three data files from one pinned gcorg-resolver commit. Review the generated manifest and domain diff before merging."
+              --body "$pr_body"
           fi
