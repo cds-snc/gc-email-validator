@@ -1,10 +1,10 @@
 {
   "sourceRepository": "https://github.com/cds-snc/gcorg-resolver",
-  "sourceCommit": "7a66639ca428fa10d9173f1030573a2afeebf4ff",
+  "sourceCommit": "4253bd06db82219303451447386bb20a981d5fc6",
   "officialDatasetUrl": "https://open.canada.ca/data/en/dataset/57180b36-3428-4a7f-afe3-2161a6b44ec5",
-  "concordanceUrl": "https://raw.githubusercontent.com/cds-snc/gcorg-resolver/7a66639ca428fa10d9173f1030573a2afeebf4ff/data/gc_concordance.csv",
-  "orgInfoUrl": "https://raw.githubusercontent.com/cds-snc/gcorg-resolver/7a66639ca428fa10d9173f1030573a2afeebf4ff/data/gc_org_info.csv",
-  "aliasesUrl": "https://raw.githubusercontent.com/cds-snc/gcorg-resolver/7a66639ca428fa10d9173f1030573a2afeebf4ff/data/gc_org_aliases.csv",
+  "concordanceUrl": "https://raw.githubusercontent.com/cds-snc/gcorg-resolver/4253bd06db82219303451447386bb20a981d5fc6/data/gc_concordance.csv",
+  "orgInfoUrl": "https://raw.githubusercontent.com/cds-snc/gcorg-resolver/4253bd06db82219303451447386bb20a981d5fc6/data/gc_org_info.csv",
+  "aliasesUrl": "https://raw.githubusercontent.com/cds-snc/gcorg-resolver/4253bd06db82219303451447386bb20a981d5fc6/data/gc_org_aliases.csv",
   "concordanceSha256": "49326bb3926a6f019c5ba818119c0fff20b16026d292e28d8a5373d393ab53be",
   "orgInfoSha256": "b83ae986ae43a1b68b6bd57c543197b206ce4ea089098925843d0576d0d03a36",
   "aliasesSha256": "4d6d1accbe1dcf71aff4ff2461f165584a21656f33fb5566b86b74f30b74bb8e"
