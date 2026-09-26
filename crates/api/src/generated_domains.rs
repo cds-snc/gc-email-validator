@@ -3,7 +3,7 @@
 use crate::DomainRule;
 
 pub const DATASET_VERSION: &str =
-    "sha256:17290e0a814a2709136d8ba32426ac641c60cd47c928cf226285bdc0d79deaea";
+    "sha256:415662e4e7c3b9644550fe30aa85b239ed3b6e4bc5ba9aabe3e4fdb5ff14950e";
 
 pub static NAMESPACE_ROOTS: &[&str] = &["canada.ca", "gc.ca"];
 
