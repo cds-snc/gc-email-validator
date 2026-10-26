@@ -81,7 +81,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Terraform plan
-        uses: cds-snc/terraform-plan@cfe2a67071efc4770e923e26a7af2641829386f9
+        uses: cds-snc/terraform-plan@fae45bcf9112c81caf401660b2a7d10654b773aa
         with:
           comment-delete: true
           comment-title: "Production: ${{ matrix.module }}"
