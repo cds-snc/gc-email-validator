@@ -682,8 +682,8 @@ cdc-ccl.gc.ca,3615
 cdc-dcc.gc.ca,3652
 cdev.gc.ca,3635
 cdic.ca,3634
-cds,3591
-cds-snc.ca,3591
+cds,2292
+cds-snc.ca,2292
 cec.org,3412
 ced,2257
 ced-dec,2257
@@ -742,6 +742,7 @@ chairs-chaires.gc.ca,2316
 chambre communes,3428
 charlottetown airport authority,3458
 chief electoral officer,2271
+chief electoral officer bureau directeur general elections,2271
 chief military judge,3582
 chief science advisor,3611
 chr,2318
@@ -1054,9 +1055,9 @@ dfo,2226
 dfo mpo,2226
 dfo-mpo,2226
 dfo-mpo.gc.ca,2226
-digital service,2229
-digital service employment social development,2229
-digital service service numerique,2229
+digital service,2292
+digital service employment social development,2292
+digital service service numerique,2292
 directeur etablissement soldats,3422
 directeur general elections,2271
 directeur parlementaire budget,3433
@@ -1111,7 +1112,7 @@ employment insurance commission,2302
 employment insurance commission commission assurance-emploi,2302
 employment insurance financing board,3666
 employment social development,2229
-employment social development digital service,2229
+employment social development digital service,2292
 employment social development emploi developpement social,2229
 en-corporate.canada.travel,3647
 energie atomique limitee,3649
@@ -1547,8 +1548,9 @@ mpa-apm,3477
 mpcc,2264
 mpcc-cppm,2264
 mpcc-cppm.gc.ca,2264
-mpo,2226
+mpo,0
 mpo dfo,2226
+mpo-bgp.gc.ca,3710
 mpo-dfo.gc.ca,2226
 multilateral investment guarantee agency,3411
 musee agriculture alimentation,3553
@@ -2071,6 +2073,7 @@ service appui tribunaux administratifs administrative tribunals support service,
 service correctionnel,2255
 service correctionnel correctional service,2255
 service delegues commerciaux,3560
+service numerique,2292
 service poursuites penales,2277
 service poursuites penales public prosecution service,2277
 service protection parlementaire,3434
