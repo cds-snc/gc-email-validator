@@ -3,7 +3,7 @@
 use crate::DomainRule;
 
 pub const DATASET_VERSION: &str =
-    "sha256:17290e0a814a2709136d8ba32426ac641c60cd47c928cf226285bdc0d79deaea";
+    "sha256:bc93ee80fb68e82ba328de1ce1cde64058fe622ce4b45b41625601e5941e1503";
 
 pub static NAMESPACE_ROOTS: &[&str] = &["canada.ca", "gc.ca"];
 
@@ -974,6 +974,13 @@ pub static RULES: &[DomainRule] = &[
         organization_fr: Some(
             "Commission d'examen des plaintes concernant la police militaire du Canada",
         ),
+    },
+    DomainRule {
+        domain: "mpo-bgp.gc.ca",
+        include_subdomains: false,
+        gc_org_id: Some(3710),
+        organization_en: Some("Major Projects Office"),
+        organization_fr: Some("Bureau des grands projets"),
     },
     DomainRule {
         domain: "mpo-dfo.gc.ca",
